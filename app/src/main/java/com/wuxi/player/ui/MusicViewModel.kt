@@ -38,6 +38,20 @@ class MusicViewModel(
         }
     }
     
+    init {
+        // 设置 PlayerManager 的回调，实现控制中心与 ViewModel 的联动
+        playerManager.playlistCallback = object : PlayerManager.PlaylistCallback {
+            override fun onSkipToNext() = playNext()
+            override fun onSkipToPrevious() = playPrevious()
+            override fun onToggleFavorite() {
+                _currentSong.value?.let { toggleFavorite(it) }
+            }
+            override fun isFavorite(): Boolean {
+                return _currentSong.value?.let { _favoriteSongs.value.contains(it.id) } ?: false
+            }
+        }
+    }
+
     private val api = Retrofit.Builder()
         .baseUrl(MusicApi.BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())
@@ -698,7 +712,8 @@ class MusicViewModel(
         return lines
     }
 
-    fun toggleFavorite(songId: Long) {
+    fun toggleFavorite(song: Song) {
+        val songId = song.id
         val currentIds = _favoriteSongs.value.toMutableSet()
         val currentObjects = _favoriteSongList.value.toMutableList()
         
@@ -707,15 +722,7 @@ class MusicViewModel(
             currentObjects.removeAll { it.id == songId }
         } else {
             currentIds.add(songId)
-            // 尝试查找 Song 对象
-            val song = _currentSong.value?.takeIf { it.id == songId }
-                ?: _searchResults.value.find { it.id == songId }
-                ?: _playlist.value.find { it.id == songId }
-                ?: _playHistory.value.find { it.id == songId }
-            
-            if (song != null) {
-                currentObjects.add(song)
-            }
+            currentObjects.add(song)
         }
         _favoriteSongs.value = currentIds
         _favoriteSongList.value = currentObjects

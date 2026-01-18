@@ -251,7 +251,7 @@ fun MusicPlayerApp(viewModel: MusicViewModel) {
                                                 song = song,
                                                 isCurrent = song.id == currentSong?.id,
                                                 isFavorite = favoriteSongs.contains(song.id),
-                                                onFavoriteClick = { viewModel.toggleFavorite(song.id) },
+                                                onFavoriteClick = { viewModel.toggleFavorite(song) },
                                                 onClick = { viewModel.playSong(song) }
                                             )
                                         }
@@ -266,7 +266,7 @@ fun MusicPlayerApp(viewModel: MusicViewModel) {
                                         song = song,
                                         isCurrent = song.id == currentSong?.id,
                                         isFavorite = favoriteSongs.contains(song.id),
-                                        onFavoriteClick = { viewModel.toggleFavorite(song.id) },
+                                        onFavoriteClick = { viewModel.toggleFavorite(song) },
                                         onClick = { viewModel.playSong(song) }
                                     )
                                 }
@@ -356,7 +356,7 @@ fun MusicPlayerApp(viewModel: MusicViewModel) {
                     onPrevious = { viewModel.playPrevious() },
                     onSeek = { viewModel.seekTo(it) },
                     onToggleMode = { viewModel.togglePlaybackMode() },
-                    onToggleFavorite = { viewModel.toggleFavorite(currentSong!!.id) },
+                    onToggleFavorite = { viewModel.toggleFavorite(currentSong!!) },
                     onDownload = { viewModel.downloadSong(currentSong!!) },
                     onShowPlaylist = { showPlaylist = true },
                     onDismiss = { showNowPlaying = false }

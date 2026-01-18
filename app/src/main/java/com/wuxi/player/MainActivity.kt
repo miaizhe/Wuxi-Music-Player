@@ -37,6 +37,9 @@ class MainActivity : ComponentActivity() {
         val playerManager = (application as WuxiApplication).playerManager
         val viewModel = ViewModelProvider(this, MusicViewModel.Factory(playerManager, this))[MusicViewModel::class.java]
         
+        // 确保播放服务已启动，以激活 MediaSession 和流体云
+        playerManager.startService()
+        
         setContent {
             MaterialTheme {
                 Surface(

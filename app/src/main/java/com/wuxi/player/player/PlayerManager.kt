@@ -8,11 +8,27 @@ import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import android.os.PowerManager
 import androidx.media3.common.Player
 
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+
 class PlayerManager(private val context: Context) {
-    private val exoPlayer = ExoPlayer.Builder(context).build()
-    
+    private val exoPlayer = ExoPlayer.Builder(context)
+        .setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                .build(),
+            true // 自动处理音频焦点
+        )
+        .setHandleAudioBecomingNoisy(true) // 拔出耳机自动暂停
+        .setWakeMode(C.WAKE_MODE_NETWORK) // 保持网络唤醒
+        .build()
+    private val wakeLock: PowerManager.WakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager)
+        .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WuxiPlayer:WakeLock")
+
     fun getExoPlayer() = exoPlayer
 
     private val _isPlaying = MutableStateFlow(false)
@@ -33,14 +49,27 @@ class PlayerManager(private val context: Context) {
     private val _onSongEnded = MutableStateFlow(false)
     val onSongEnded: StateFlow<Boolean> = _onSongEnded
 
+    // 播放列表回调，用于与 ViewModel 同步
+    var playlistCallback: PlaylistCallback? = null
+
+    interface PlaylistCallback {
+        fun onSkipToNext()
+        fun onSkipToPrevious()
+        fun onToggleFavorite()
+        fun isFavorite(): Boolean
+    }
+
     init {
+        exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
         exoPlayer.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _isPlaying.value = isPlaying
                 if (isPlaying) {
                     startProgressUpdate()
+                    if (!wakeLock.isHeld) wakeLock.acquire()
                 } else {
                     stopProgressUpdate()
+                    if (wakeLock.isHeld) wakeLock.release()
                 }
             }
 
@@ -79,6 +108,10 @@ class PlayerManager(private val context: Context) {
             .setArtist(artist)
             .setAlbumTitle(album)
             .setArtworkUri(artworkUri)
+            .setDisplayTitle(title)
+            .setSubtitle(artist)
+            .setIsPlayable(true)
+            .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
             .build()
 
         val mediaItem = MediaItem.Builder()
