@@ -50,11 +50,14 @@ jobs:
         with:
           name: Wuxi-Player-Debug
 
+      - name: Rename APK
+        run: mv app-debug.apk Wuxi-Player-${{ github.ref_name }}.apk
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          files: app-debug.apk
+          files: Wuxi-Player-${{ github.ref_name }}.apk
           name: Release ${{ github.ref_name }}
           body: |
             Automated Release for ${{ github.ref_name }}
