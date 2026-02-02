@@ -1,6 +1,7 @@
 name: Android CI/CD
 
 on:
+  workflow_dispatch: {}
   push:
     tags:
       - 'v*' # 当推送 v 开头的标签时触发发布
